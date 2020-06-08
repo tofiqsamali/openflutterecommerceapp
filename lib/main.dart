@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
+import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/services.dart' as system;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_translate/flutter_translate.dart';
@@ -18,6 +19,7 @@ import 'package:openflutterecommerce/presentation/features/product_details/produ
 import 'package:openflutterecommerce/presentation/features/products/products.dart';
 import 'package:openflutterecommerce/presentation/features/sign_in/signin_screen.dart';
 import 'package:openflutterecommerce/presentation/features/sign_up/signup_screen.dart';
+import 'package:path/path.dart';
 
 import 'config/routes.dart';
 import 'data/repositories/abstract/cart_repository.dart';
@@ -63,36 +65,39 @@ void main() async {
   );
 
   WidgetsFlutterBinding.ensureInitialized();
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
+  await system.SystemChrome.setPreferredOrientations([
+    system.DeviceOrientation.portraitUp,
+    system.DeviceOrientation.portraitDown,
   ]);
 
   BlocSupervisor.delegate = SimpleBlocDelegate();
+
   runApp(
-    BlocProvider<AuthenticationBloc>(
-      create: (context) => AuthenticationBloc()..add(AppStarted()),
-      child: MultiRepositoryProvider(
-        providers: [
-          RepositoryProvider<CategoryRepository>(
-            create: (context) => sl(),
+    DevicePreview(
+      builder: (context) => BlocProvider<AuthenticationBloc>(
+        create: (context) => AuthenticationBloc()..add(AppStarted()),
+        child: MultiRepositoryProvider(
+          providers: [
+            RepositoryProvider<CategoryRepository>(
+              create: (context) => sl(),
+            ),
+            RepositoryProvider<ProductRepository>(
+              create: (context) => sl(),
+            ),
+            RepositoryProvider<FavoritesRepository>(
+              create: (context) => sl(),
+            ),
+            RepositoryProvider<UserRepository>(
+              create: (context) => sl(),
+            ),
+            RepositoryProvider<CartRepository>(
+              create: (context) => sl(),
+            ),
+          ],
+          child: LocalizedApp(
+            delegate,
+            OpenFlutterEcommerceApp(),
           ),
-          RepositoryProvider<ProductRepository>(
-            create: (context) => sl(),
-          ),
-          RepositoryProvider<FavoritesRepository>(
-            create: (context) => sl(),
-          ),
-          RepositoryProvider<UserRepository>(
-            create: (context) => sl(),
-          ),
-          RepositoryProvider<CartRepository>(
-            create: (context) => sl(),
-          ),
-        ],
-        child: LocalizedApp(
-          delegate,
-          OpenFlutterEcommerceApp(),
         ),
       ),
     ),
@@ -107,6 +112,8 @@ class OpenFlutterEcommerceApp extends StatelessWidget {
     return LocalizationProvider(
         state: LocalizationProvider.of(context).state,
         child: MaterialApp(
+          locale: DevicePreview.of(context).locale, // <--- Add the locale
+          builder: DevicePreview.appBuilder, // <--- Add the builder
           localizationsDelegates: [
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
@@ -115,7 +122,7 @@ class OpenFlutterEcommerceApp extends StatelessWidget {
           onGenerateRoute: _registerRoutesWithParameters,
           supportedLocales: localizationDelegate.supportedLocales,
           debugShowCheckedModeBanner: false,
-          locale: localizationDelegate.currentLocale,
+          // locale: localizationDelegate.currentLocale,
           title: 'Open FLutter E-commerce',
           theme: OpenFlutterEcommerceTheme.of(context),
           routes: _registerRoutes(),
@@ -143,7 +150,7 @@ class OpenFlutterEcommerceApp extends StatelessWidget {
             } else {
               return SplashScreen();
             }*/
-            return ProfileScreen(); 
+            return ProfileScreen();
           }),
     };
   }
